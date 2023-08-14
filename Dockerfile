@@ -1,8 +1,8 @@
 FROM adoptopenjdk:11-jre-hotspot
-ARG JAR_FILE=targer/*.jar
-COPY${JAR_FILE} custmomer-service-v1.jar
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} custmomer-service.jar
 EXPOSE 8080
-CMD ["java", "-jar", "custmomer-service-v1.jar"]
+CMD ["java", "-jar", "custmomer-service.jar"]
 
 
 # build and run docker image
