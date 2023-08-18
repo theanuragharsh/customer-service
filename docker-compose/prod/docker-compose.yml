@@ -1,0 +1,85 @@
+version: "3.8"
+
+services:
+  customer-service:
+    image: customer-service:latest
+    mem_limit: 700m
+    ports:
+      - "8080:8080"
+    networks:
+      - bank-services
+    depends_on:
+      - bank-service-configserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 25s
+        max_attempts: 5
+        window: 300s
+    environment:
+      SPRING_APPLICATION_NAME: customer-service
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+
+  account-service:
+    image: account-service:latest
+    mem_limit: 700m
+    ports:
+      - "8081:8081"
+    networks:
+      - bank-services
+    depends_on:
+      - bank-service-configserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 25s
+        max_attempts: 5
+        window: 300s
+    environment:
+      SPRING_APPLICATION_NAME: account-service
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+
+  loan-service:
+    image: loan-service:latest
+    mem_limit: 700m
+    ports:
+      - "8082:8082"
+    networks:
+      - bank-services
+    depends_on:
+      - bank-service-configserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 25s
+        max_attempts: 5
+        window: 300s
+    environment:
+      SPRING_APPLICATION_NAME: loan-service
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+
+  card-service:
+    image: card-service:latest
+    mem_limit: 700m
+    ports:
+      - "8082:8082"
+    networks:
+      - bank-services
+    depends_on:
+      - bank-service-configserver
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 25s
+        max_attempts: 5
+        window: 300s
+    environment:
+      SPRING_APPLICATION_NAME: card-service
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+
+networks:
+  bank-services:

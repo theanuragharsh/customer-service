@@ -52,18 +52,19 @@ public class CustomerServiceImpl implements CustomerService {
         log.info("Customer Account Details fetched successfully with customerID: {}", customerID);
         return webClient.build()
                 .get()
-                .uri("http://localhost:8081/account-service/csp/{customerId}", customerID)
+                .uri("http://localhost:8081/account-service/csp/" + customerID)
                 .retrieve()
                 .bodyToFlux(Account.class)
                 .collectList()
                 .block();
+
     }
 
     private List<Loans> fetchLoans(Long customerID) {
         log.debug("Fetching loan details from loan-service using WebClient..");
         return webClient.build()
                 .get()
-                .uri("http://localhost:8082/loan-service/{customerId}", customerID)
+                .uri("http://localhost:8082/loan-service/" + customerID)
                 .retrieve()
                 .bodyToFlux(Loans.class)
                 .collectList()
@@ -74,7 +75,7 @@ public class CustomerServiceImpl implements CustomerService {
         log.debug("Fetching card details from card-service using WebClient..");
         return webClient.build()
                 .get()
-                .uri("http://localhost:8083/card-service/{customerId}", customerID)
+                .uri("http://localhost:8083/card-service/" + customerID)
                 .retrieve()
                 .bodyToFlux(Card.class)
                 .collectList()
