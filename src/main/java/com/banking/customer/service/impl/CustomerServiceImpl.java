@@ -7,6 +7,9 @@ import com.banking.customer.model.Card;
 import com.banking.customer.model.Loans;
 import com.banking.customer.repo.CustomerRepo;
 import com.banking.customer.service.CustomerService;
+import com.banking.customer.service.client.AccountServiceClient;
+import com.banking.customer.service.client.CardServiceClient;
+import com.banking.customer.service.client.LoanServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.sleuth.Span;
@@ -26,6 +29,9 @@ public class CustomerServiceImpl implements CustomerService {
     private final Tracer tracer;
     private final CustomerRepo customerRepo;
     private final CustomerMapper customerMapper;
+    private final AccountServiceClient accountServiceClient;
+    private final LoanServiceClient loanServiceClient;
+    private final CardServiceClient cardServiceClient;
 
     @Override
     public CustomerDetailsResponseDto findCustomerDetailsByCustomerID(Long customerID) {
@@ -46,6 +52,18 @@ public class CustomerServiceImpl implements CustomerService {
         } finally {
             span.end();
         }
+    }
+
+    @Override
+    public CustomerDetailsResponseDto findMyCustomerDetailsByCustomerID(Long customerId) {
+        return customerRepo.findById(customerId)
+                .map(customerMapper::toDto)
+                .map(customerDetailsResponseDto -> {
+                    customerDetailsResponseDto.setAccounts(accountServiceClient.getAccountDetails(customerId));
+                    customerDetailsResponseDto.setLoans(loanServiceClient.getLoanDetails(customerId));
+                    customerDetailsResponseDto.setCards(cardServiceClient.getCardDetails(customerId));
+                    return customerDetailsResponseDto;
+                }).orElseThrow(() -> new NoSuchElementException(String.format("No Customer Found with this customerID: %d", customerId)));
     }
 
     private List<Account> fetchAccounts(Long customerID) {

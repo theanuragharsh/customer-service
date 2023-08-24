@@ -37,4 +37,9 @@ public class CustomerController {
     public CustomerDetailsResponseDto findCustomerDetailsByCustomerID(@PathVariable Long customerId) {
         return customerService.findCustomerDetailsByCustomerID(customerId);
     }
+
+    @GetMapping("/myCustomer/{customerId}")
+    public CustomerDetailsResponseDto findMyCustomerDetailsByCustomerId(@PathVariable Long customerId){
+        return customerService.findMyCustomerDetailsByCustomerID(customerId);
+    }
 }
