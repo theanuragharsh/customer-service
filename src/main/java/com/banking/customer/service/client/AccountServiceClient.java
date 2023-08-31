@@ -2,10 +2,7 @@ package com.banking.customer.service.client;
 
 import com.banking.customer.model.Account;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -13,7 +10,7 @@ import java.util.List;
 public interface AccountServiceClient {
 
     @RequestMapping(method = RequestMethod.GET, value = "account-service/{customerId}", consumes = "application/json")
-    List<Account> getAccountDetails(@PathVariable("customerId") Long customerId);
+    List<Account> getAccountDetails(@RequestHeader("correlation-id") String correlationId, @PathVariable("customerId") Long customerId);
 
 /*
     @GetMapping("/{customerId}")

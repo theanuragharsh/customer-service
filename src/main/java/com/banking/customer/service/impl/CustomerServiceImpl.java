@@ -10,6 +10,8 @@ import com.banking.customer.service.CustomerService;
 import com.banking.customer.service.client.AccountServiceClient;
 import com.banking.customer.service.client.CardServiceClient;
 import com.banking.customer.service.client.LoanServiceClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.sleuth.Span;
@@ -55,13 +57,32 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDetailsResponseDto findMyCustomerDetailsByCustomerID(Long customerId) {
+    @CircuitBreaker(name = "myCustomerDetailsCB", fallbackMethod = "myCustomerDetailsCBFallbackMethod")
+//    @TimeLimiter(name = "myCustomerDetailsCB", fallbackMethod = "myCustomerDetailsCBFallbackMethod")
+    @Retry(name = "myCustomerDetailsCB", fallbackMethod = "myCustomerDetailsCBFallbackMethod")
+    public CustomerDetailsResponseDto findMyCustomerDetailsByCustomerID(String correlationId, Long customerId) {
+        log.info("Fetching Customer details for customerId : {}", customerId);
         return customerRepo.findById(customerId)
                 .map(customerMapper::toDto)
                 .map(customerDetailsResponseDto -> {
-                    customerDetailsResponseDto.setAccounts(accountServiceClient.getAccountDetails(customerId));
-                    customerDetailsResponseDto.setLoans(loanServiceClient.getLoanDetails(customerId));
-                    customerDetailsResponseDto.setCards(cardServiceClient.getCardDetails(customerId));
+                    log.debug("correlationId : {}", correlationId);
+                    customerDetailsResponseDto.setAccounts(accountServiceClient.getAccountDetails(correlationId, customerId));
+                    customerDetailsResponseDto.setLoans(loanServiceClient.getLoanDetails(correlationId, customerId));
+                    customerDetailsResponseDto.setCards(cardServiceClient.getCardDetails(correlationId, customerId));
+                    return customerDetailsResponseDto;
+                }).orElseThrow(() -> new NoSuchElementException(String.format("No Customer Found with this customerID: %d", customerId)));
+    }
+
+
+    public CustomerDetailsResponseDto myCustomerDetailsCBFallbackMethod(String correlationId, Long customerId, RuntimeException exception) {
+        log.info("FALLBACK : Fetching Customer details for customerId : {}", customerId);
+        return customerRepo.findById(customerId)
+                .map(customerMapper::toDto)
+                .map(customerDetailsResponseDto -> {
+                    log.debug("correlationId : {}", correlationId);
+                    customerDetailsResponseDto.setAccounts(accountServiceClient.getAccountDetails(correlationId, customerId));
+                    customerDetailsResponseDto.setLoans(loanServiceClient.getLoanDetails(correlationId, customerId));
+//                    customerDetailsResponseDto.setCards(cardServiceClient.getCardDetails(correlationId, customerId));
                     return customerDetailsResponseDto;
                 }).orElseThrow(() -> new NoSuchElementException(String.format("No Customer Found with this customerID: %d", customerId)));
     }
