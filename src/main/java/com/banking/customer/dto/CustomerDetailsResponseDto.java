@@ -2,7 +2,7 @@ package com.banking.customer.dto;
 
 import com.banking.customer.model.Account;
 import com.banking.customer.model.Card;
-import com.banking.customer.model.Loans;
+import com.banking.customer.model.Loan;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,8 +13,8 @@ import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class CustomerDetailsResponseDto {
     private Long customerId;
     private String name;
@@ -22,6 +22,6 @@ public class CustomerDetailsResponseDto {
     private String mobileNumber;
     private LocalDate createdDate;
     private List<Account> accounts;
-    private List<Loans> loans;
+    private List<Loan> loans;
     private List<Card> cards;
 }

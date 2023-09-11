@@ -9,7 +9,7 @@ import java.sql.Date;
 @Getter
 @Setter
 @ToString
-public class Loans {
+public class Loan {
 
     private long loanNumber;
     private long customerId;

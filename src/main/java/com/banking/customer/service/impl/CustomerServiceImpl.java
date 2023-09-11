@@ -4,7 +4,7 @@ import com.banking.customer.dto.CustomerDetailsResponseDto;
 import com.banking.customer.mapper.CustomerMapper;
 import com.banking.customer.model.Account;
 import com.banking.customer.model.Card;
-import com.banking.customer.model.Loans;
+import com.banking.customer.model.Loan;
 import com.banking.customer.repo.CustomerRepo;
 import com.banking.customer.service.CustomerService;
 import com.banking.customer.service.client.AccountServiceClient;
@@ -36,7 +36,7 @@ public class CustomerServiceImpl implements CustomerService {
     private final CardServiceClient cardServiceClient;
 
     @Override
-    public CustomerDetailsResponseDto findCustomerDetailsByCustomerID(Long customerID) {
+    public CustomerDetailsResponseDto findCustomerDetailsByCustomerID(String correlationId, Long customerID) {
         Span span = tracer.nextSpan().name("findCustomerDetailsByCustomerID").start();
         try {
             log.debug("Fetching Customer Details for customerID: {}..", customerID);
@@ -44,9 +44,9 @@ public class CustomerServiceImpl implements CustomerService {
                     .findById(customerID)
                     .map(customerMapper::toDto)
                     .map(customerDetailsResponseDto -> {
-                        customerDetailsResponseDto.setAccounts(fetchAccounts(customerID));
-                        customerDetailsResponseDto.setLoans(fetchLoans(customerID));
-                        customerDetailsResponseDto.setCards(fetchCards(customerID));
+                        customerDetailsResponseDto.setAccounts(fetchAccounts(correlationId, customerID));
+                        customerDetailsResponseDto.setLoans(fetchLoans(correlationId, customerID));
+                        customerDetailsResponseDto.setCards(fetchCards(correlationId, customerID));
                         log.info("Account Details Fetched Successfully.");
                         return customerDetailsResponseDto;
                     })
@@ -87,11 +87,12 @@ public class CustomerServiceImpl implements CustomerService {
                 }).orElseThrow(() -> new NoSuchElementException(String.format("No Customer Found with this customerID: %d", customerId)));
     }
 
-    private List<Account> fetchAccounts(Long customerID) {
+    private List<Account> fetchAccounts(String correlationId, Long customerID) {
         log.info("Customer Account Details fetched successfully with customerID: {}", customerID);
         return webClient.build()
                 .get()
                 .uri("http://localhost:8081/account-service/csp/" + customerID)
+                .header("correlation-id", correlationId)
                 .retrieve()
                 .bodyToFlux(Account.class)
                 .collectList()
@@ -99,22 +100,24 @@ public class CustomerServiceImpl implements CustomerService {
 
     }
 
-    private List<Loans> fetchLoans(Long customerID) {
+    private List<Loan> fetchLoans(String correlationId, Long customerID) {
         log.debug("Fetching loan details from loan-service using WebClient..");
         return webClient.build()
                 .get()
                 .uri("http://localhost:8082/loan-service/" + customerID)
+                .header("correlation-id", correlationId)
                 .retrieve()
-                .bodyToFlux(Loans.class)
+                .bodyToFlux(Loan.class)
                 .collectList()
                 .block();
     }
 
-    private List<Card> fetchCards(Long customerID) {
+    private List<Card> fetchCards(String correlationId, Long customerID) {
         log.debug("Fetching card details from card-service using WebClient..");
         return webClient.build()
                 .get()
                 .uri("http://localhost:8083/card-service/" + customerID)
+                .header("correlation-id", correlationId)
                 .retrieve()
                 .bodyToFlux(Card.class)
                 .collectList()

@@ -2,19 +2,13 @@ package com.banking.customer.controller;
 
 import com.banking.customer.config.CustomerServiceConfig;
 import com.banking.customer.dto.CustomerDetailsResponseDto;
-import com.banking.customer.model.Account;
-import com.banking.customer.model.Loans;
 import com.banking.customer.model.Properties;
 import com.banking.customer.service.CustomerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,8 +31,8 @@ public class CustomerController {
     }
 
     @GetMapping("/{customerId}")
-    public CustomerDetailsResponseDto findCustomerDetailsByCustomerID(@PathVariable Long customerId) {
-        return customerService.findCustomerDetailsByCustomerID(customerId);
+    public CustomerDetailsResponseDto findCustomerDetailsByCustomerID(@RequestHeader("correlation-id") String correlationId, @PathVariable Long customerId) {
+        return customerService.findCustomerDetailsByCustomerID(correlationId,customerId);
     }
 
     @GetMapping("/myCustomer/{customerId}")

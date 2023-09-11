@@ -1,13 +1,20 @@
-version: '3.8'
+version: "3.8"
 
 services:
   bank-service-configserver:
     image: bank-service-configserver:latest
     mem_limit: 700m
     ports:
-      - "9090:9090"
+      - "8071:8071"
     networks:
       - bank-services
+
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      bank-services:
 
   discovery-server:
     image: discovery-server:latest
@@ -21,20 +28,15 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 25s
+        delay: 45s
         max_attempts: 5
         window: 300s
     environment:
+      #      SPRING_APPLICATION_NAME: discovery-server
       SPRING_APPLICATION_NAME: discovery-server
       SPRING_PROFILES_ACTIVE: default
-      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
-
-  zipkin:
-    image: openzipkin/zipkin
-    ports:
-      - "9411:9411"
-    networks:
-      - bank-services
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:8071/
+  #      SPRING_CLOUD_LOADBALANCER_RIBBON_ENABLED: false
 
   customer-service:
     image: customer-service:latest
@@ -45,19 +47,17 @@ services:
       - bank-services
     depends_on:
       - bank-service-configserver
-      - discovery-server
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 25s
+        delay: 45s
         max_attempts: 5
         window: 300s
     environment:
       SPRING_APPLICATION_NAME: customer-service
       SPRING_PROFILES_ACTIVE: default
-      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8070/eureka/
-      SPRING_ZIPKIN_BASE-URL: http://zipkin:9411
 
   account-service:
     image: account-service:latest
@@ -72,15 +72,14 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 25s
+        delay: 45s
         max_attempts: 5
         window: 300s
     environment:
       SPRING_APPLICATION_NAME: account-service
       SPRING_PROFILES_ACTIVE: default
-      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8070/eureka/
-      SPRING_ZIPKIN_BASE-URL: http://zipkin:9411
 
   loan-service:
     image: loan-service:latest
@@ -91,19 +90,17 @@ services:
       - bank-services
     depends_on:
       - bank-service-configserver
-      - discovery-server
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 25s
+        delay: 45s
         max_attempts: 5
         window: 300s
     environment:
       SPRING_APPLICATION_NAME: loan-service
       SPRING_PROFILES_ACTIVE: default
-      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8070/eureka/
-      SPRING_ZIPKIN_BASE-URL: http://zipkin:9411
 
   card-service:
     image: card-service:latest
@@ -114,19 +111,43 @@ services:
       - bank-services
     depends_on:
       - bank-service-configserver
-      - discovery-server
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 25s
+        delay: 45s
         max_attempts: 5
         window: 300s
     environment:
       SPRING_APPLICATION_NAME: card-service
       SPRING_PROFILES_ACTIVE: default
-      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:9090/
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:8071/
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8070/eureka/
-      SPRING_ZIPKIN_BASE-URL: http://zipkin:9411
+
+  gatewayserver:
+    image: gatewayserver:latest
+    mem_limit: 700m
+    ports:
+      - "8072:8072"
+    networks:
+      - bank-services
+    depends_on:
+      - bank-service-configserver
+      - discovery-server
+      - customer-service
+      - account-service
+      - loan-service
+      - card-service
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 40s
+        max_attempts: 5
+        window: 400s
+    environment:
+      SPRING_APPLICATION_NAME: gatewayserver
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://bank-service-configserver:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8070/eureka/
 
 networks:
   bank-services:
